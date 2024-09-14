@@ -2,7 +2,7 @@ import type { MenuProps } from "antd";
 import { Button, Dropdown, message, notification, Space } from "antd";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { getUserApi } from "../../api/Customer/user";
 import userImage from "../../assets/General/userIcon.png";
 import { RootState } from "../../Redux/store";
@@ -10,46 +10,31 @@ import { RootState } from "../../Redux/store";
 import { addUser, getUser } from "../../Redux/userSlice";
 import "./style.css";
 
-interface IUser {
-  eamil: String;
-  firstName: String;
-  lastName: String;
-  password: String;
-  phone: Number;
-  userName: String;
-  createdAt: String;
-  _id: String;
-}
-type INav = {
-  setShowCart: () => void;
-};
-function Navbar({ setShowCart, showCart }: any) {
+function Navbar({ setShowCart }: any) {
   const [navToggler, setNavToggler] = useState(false);
   const [clientWindowHeight, setClientWindowHeight] = useState(0);
   const [boxShadow, setBoxShadow] = useState(0);
   const [item, setItem] = useState("");
   const cart = useSelector((state: RootState) => state.cartReducer.items);
-  const navigate = useNavigate();
   const dispatch = useDispatch();
   const user = useSelector(getUser);
 
-
   useEffect(() => {
     const token = localStorage?.getItem("token");
-      getUserApi(token as string)
-        .then((d) => {
-          const userDetails = {
-            id:d.data.data._id,
-            firstName: d.data.data.firstName,
-            lastName: d.data.data.lastName,
-            userName: d.data.data.userName,
-            phone: d.data.data.phone,
-            email: d.data.data.email,
-          };
+    getUserApi(token as string)
+      .then((d) => {
+        const userDetails = {
+          id: d.data.data._id,
+          firstName: d.data.data.firstName,
+          lastName: d.data.data.lastName,
+          userName: d.data.data.userName,
+          phone: d.data.data.phone,
+          email: d.data.data.email,
+        };
 
-          dispatch(addUser(userDetails))
-        })
-        .catch((e) => console.log(e));
+        dispatch(addUser(userDetails));
+      })
+      .catch((e) => console.log(e));
   }, []);
 
   useEffect(() => {
@@ -69,7 +54,7 @@ function Navbar({ setShowCart, showCart }: any) {
       setBoxShadow(boxShadowVar);
     }
   }, [clientWindowHeight]);
-  
+
   const onClick: MenuProps["onClick"] = ({ key }) => {
     if (key === "1") {
       message.info("  This is Profile");
@@ -78,7 +63,7 @@ function Navbar({ setShowCart, showCart }: any) {
       localStorage.removeItem("token");
       setItem("");
       notification.success({ message: "Log out Sucessfull" });
-      localStorage.removeItem("token")
+      localStorage.removeItem("token");
       window.location.href = "/";
     }
   };
@@ -152,7 +137,7 @@ function Navbar({ setShowCart, showCart }: any) {
               </ul>
 
               {!user.isAuthenticated ? (
-                <div className="flex justify-center items-center gap-5">
+                <div className="flex items-center justify-center gap-5">
                   <Link to="/login">
                     <Button size="large">Log In</Button>
                   </Link>
@@ -163,12 +148,12 @@ function Navbar({ setShowCart, showCart }: any) {
                   </Link>
                 </div>
               ) : (
-                <div className="flex justify-center items-center gap-5">
+                <div className="flex items-center justify-center gap-5">
                   <i
                     className="fa-solid fa-cart-shopping text-[22px] text-primary hover:text-secondary cursor-pointer relative"
                     onClick={() => setShowCart(true)}
                   >
-                    { cart.length > 0 && (
+                    {cart.length > 0 && (
                       <div className="absolute w-[15px] h-[15px] bg-[red] rounded-full top-[-10px] right-[-10px] text-light text-[10px] flex justify-center items-center">
                         {cart?.length}
                       </div>
@@ -176,14 +161,14 @@ function Navbar({ setShowCart, showCart }: any) {
                   </i>
                   <Dropdown menu={{ items, onClick }}>
                     <Space>
-                      <div className="flex justify-center items-center gap-7">
+                      <div className="flex items-center justify-center gap-7">
                         <div className="flex items-center gap-2 cursor-pointer">
                           <img
                             src={userImage}
                             alt=""
                             className="rounded-full w-[30px]"
                           />
-                          <h1 className="text-xl text-primary font-medium ">
+                          <h1 className="text-xl font-medium text-primary ">
                             {user.userName}
                           </h1>
                           <i className="fa-solid fa-caret-down text-primary "></i>

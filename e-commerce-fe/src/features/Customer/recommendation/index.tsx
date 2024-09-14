@@ -10,8 +10,7 @@ type ISlider = {
   productArray?: IProduct[];
 };
 
-function ClothesSlider({ title, productArray }: ISlider) {
-  console.log(productArray);
+function RecommendationSlider({ title, productArray }: ISlider) {
   const sliderRef = useRef(null);
   const next = () => {
     // @ts-ignore
@@ -23,8 +22,9 @@ function ClothesSlider({ title, productArray }: ISlider) {
   };
 
   const sliderSettings = {
-    slidesToShow: 4,
-    arrows: false,
+    slidesToShow:
+      productArray && productArray?.length > 4 ? 4 : productArray?.length,
+    arrows: true,
     slidesToScroll: 1,
     speed: 500,
     touchMove: true,
@@ -59,6 +59,7 @@ function ClothesSlider({ title, productArray }: ISlider) {
       },
     ],
   };
+
   return (
     <div className="relative px-24 my-10">
       <i
@@ -71,18 +72,20 @@ function ClothesSlider({ title, productArray }: ISlider) {
         style={{ transition: "all 300ms" }}
         onClick={prev}
       ></i>
-      <h1 className="text-2xl font-semibold Heading text-primary ">{title}</h1>
+      <h1 className="w-full text-2xl font-semibold Heading text-primary ">
+        {title}
+      </h1>
       <Slider ref={sliderRef} {...sliderSettings}>
-        {productArray?.map((product: ICard) => {
+        {productArray?.map((product: any) => {
           return (
             <Card
-              key={product._id}
-              _id={product._id}
-              name={product.name}
-              photo={product.photo}
-              intro={product.intro}
-              price={product.price}
-              discount={product.discount}
+              key={product.id._id}
+              _id={product.id._id}
+              name={product.id.name}
+              photo={product.id.photo}
+              intro={product.id.intro}
+              price={product.id.price}
+              discount={product.id.discount}
             />
           );
         })}
@@ -90,4 +93,4 @@ function ClothesSlider({ title, productArray }: ISlider) {
     </div>
   );
 }
-export default ClothesSlider;
+export default RecommendationSlider;

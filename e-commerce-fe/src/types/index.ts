@@ -11,6 +11,8 @@ export type IProduct = {
     title: string;
     description: string;
   };
+  averageRating: number | null;
+  totalRating: number;
 };
 
 export type ICard = {
@@ -19,6 +21,8 @@ export type ICard = {
   intro: string;
   photo: string;
   price: number;
+  averageRating?: number | null;
+  totalRating?: number;
   discount: string;
 };
 
@@ -32,22 +36,21 @@ export type ICart = {
   size: string;
 };
 
-export type IUser ={
-  id:string;
+export type IUser = {
+  id: string;
   firstName: String;
   lastName: String;
   userName: String;
   phone: String;
   email: String;
-}
+};
 
-export type IOrder ={
+export type IOrder = {
   id: String;
   name: String;
-  email:String;
-  receiver_name:String;
-  status:String;
+  email: String;
+  receiver_name: String;
+  status: String;
   receiver_contact: String;
   method: String;
-}
-
+};

@@ -3,7 +3,6 @@ import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 import path from "path";
 
-
 const storage = multer.diskStorage({
   filename: (req, file, callback) => {
     let ext = path.extname(file.originalname);
@@ -42,10 +41,14 @@ uploadRouter
     try {
       const file = req?.file?.path;
       const data = await cloudinary.uploader.upload(file);
-      res.status(200).json({ data: data.url, message: "File uploaded successfully" });
+      res
+        .status(200)
+        .json({ data: data.url, message: "File uploaded successfully" });
     } catch (error) {
       console.error("File upload failed:", error);
-      res.status(500).json({ error: "File upload failed", message: error.message });
+      res
+        .status(500)
+        .json({ error: "File upload failed", message: error.message });
     }
   });
 
