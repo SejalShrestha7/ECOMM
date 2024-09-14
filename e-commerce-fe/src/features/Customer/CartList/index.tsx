@@ -20,26 +20,26 @@ function CardList({ setShowCart, showCart }: any) {
   return (
     <section
       className={clsx(
-        "fixed top-0 bottom-0  right-0 left-[60%] z-50 bg-[#fff] drop-shadow-2xl translate-x-[110%] overflow-auto",
-        showCart && "translate-x-[0%]"
+        "fixed top-0 bottom-0  right-0 left-[60%] z-50 bg-[#fff] drop-shadow-2xl translate-x-[0%] overflow-auto",
+        !showCart && "translate-x-[110%]"
       )}
       style={{ transition: "all 300ms ease-in-out" }}
     >
-      <div className="flex items-center justify-between px-14 py-10">
-        <span className="text-3xl text-primary font-medium">Cart</span>
+      <div className="flex items-center justify-between py-10 px-14">
+        <span className="text-3xl font-medium text-primary">Cart</span>
         <i
           className="fa-solid fa-xmark text-[1.5rem] text-primary cursor-pointer"
           onClick={() => setShowCart(false)}
         ></i>
       </div>
-      <div className="flex flex-col px-10 gap-10">
+      <div className="flex flex-col gap-10 px-10">
         {cart.map((item) => {
           return <CartItem {...item} key={item.id} />;
         })}
       </div>
 
       {cart.length > 0 ? (
-        <div className="flex items-center justify-center mt-10 gap-5">
+        <div className="flex items-center justify-center gap-5 mt-10">
           <Button
             type="primary"
             className=""
@@ -55,10 +55,14 @@ function CardList({ setShowCart, showCart }: any) {
           </Button>
         </div>
       ) : (
-        <div className="flex items-center justify-center mt-10 gap-5"><Empty /></div>
+        <div className="flex items-center justify-center gap-5 mt-10">
+          <Empty />
+        </div>
       )}
-      <Link to={"/allproducts"} className="mb-10 mt-5 flex justify-center">
-        <span className=" opacity-70 underline cursor-pointer text-primary hover:text-secondary">Continue shopping</span>
+      <Link to={"/allproducts"} className="flex justify-center mt-5 mb-10">
+        <span className="underline cursor-pointer opacity-70 text-primary hover:text-secondary">
+          Continue shopping
+        </span>
       </Link>
     </section>
   );

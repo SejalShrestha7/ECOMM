@@ -4,9 +4,13 @@ import type { SliderMarks } from "antd/es/slider";
 import type { RadioChangeEvent } from "antd";
 import Card from "../../../constants/Card";
 import Layout from "../../../layout/Customer";
-import { getAllProducts ,getFilteredProduct} from "../../../api/Customer/product";
+import {
+  getAllProducts,
+  getFilteredProduct,
+} from "../../../api/Customer/product";
 import { AudioOutlined } from "@ant-design/icons";
 import { IProduct } from "../../../types";
+import { useSearchParams } from "react-router-dom";
 
 const initialFilter = {
   name: null,
@@ -15,24 +19,20 @@ const initialFilter = {
   discount: [0, 100000000],
 };
 
-
-
-function AllProductsDisplay() {
-  const [productArray, setProductArray] = useState<IProduct[]>();
-  const [filteredArray, setFilteredArray] = useState<IProduct[]>();
+export function AllProductsDisplay() {
+  const [productDetails, setProductDetails] = useState<IProduct[]>([]);
   const [loader, setLoader] = useState<boolean>(true);
   const [filter, setfilter] = useState<any>(initialFilter);
 
   useEffect(() => {
     allProduct();
-    setTimeout(() => {
-      setLoader(false);
-    }, 1000);
+
     window.scrollTo(0, 0);
   }, []);
   const allProduct = async () => {
     const products = await getAllProducts();
-    setProductArray(products?.data?.data);
+    setProductDetails(products?.data?.data);
+    setLoader(false);
   };
   const marks: SliderMarks = {
     0: "0",
@@ -50,16 +50,14 @@ function AllProductsDisplay() {
     60: "6000",
     80: "8000",
     100: "10000",
-  }
+  };
   const hadnelSliderChangePrice = ([value1, value2]: any) => {
-    console.log(value1, value2);
     setfilter({
       ...filter,
-      price: [value1*100, value2*100],
+      price: [value1 * 100, value2 * 100],
     });
   };
   const hadnelSliderChangeDiscount = ([value1, value2]: any) => {
-    console.log(value1, value2);
     setfilter({
       ...filter,
       discount: [value1, value2],
@@ -67,8 +65,6 @@ function AllProductsDisplay() {
   };
 
   const onChange = (e: RadioChangeEvent) => {
-    console.log(filter);
-
     setfilter({
       ...filter,
       category: e.target.value,
@@ -77,11 +73,10 @@ function AllProductsDisplay() {
   const { Search } = Input;
 
   const handleFilter = async () => {
-
     const products = await getFilteredProduct(filter);
-    console.log(products)
-    setProductArray(products?.data.data);
-  }
+
+    setProductDetails(products?.data.data);
+  };
 
   const suffix = (
     <AudioOutlined
@@ -91,29 +86,37 @@ function AllProductsDisplay() {
       }}
     />
   );
+  const [searchParams] = useSearchParams();
+  useEffect(() => {
+    const category = searchParams.get("category");
+    if (category !== null) {
+      setfilter(() => ({ ...filter, category: category }));
+    }
 
-  // const onSearch = (value: any) => setfilter({ ...filter, name: value });
+    handleFilter();
+  }, [filter]);
+
   const onSearch = (e: any) => setfilter({ ...filter, name: e.target.value });
 
   return (
     <Layout hideFooter>
-      <section className="flex relative ">
+      <section className="relative flex ">
         <div className=" py-14 pl-5 min-w-[22rem] max-w-[22rem] ">
           <div className="p-2 bg-[#e4eaf5] pb-10 rounded-3xl px-7">
-            <span className="text-3xl font-medium flex justify-center items-center mt-5">
+            <span className="flex items-center justify-center mt-5 text-3xl font-medium">
               <i className="fa-solid fa-filter"></i> Filter
             </span>
-            <div className="mt-5 flex flex-col items-start">
+            <div className="flex flex-col items-start mt-5">
               <span className="text-lg font-medium">Search</span>
               <Search
                 placeholder="search ..."
                 size="large"
-                className="border-none rounded mt-3 text-gray-700 leading-tight"
+                className="mt-3 leading-tight text-gray-700 border-none rounded"
                 allowClear
                 onChange={onSearch}
               />
             </div>
-            <div className="mt-5 flex flex-col items-start">
+            <div className="flex flex-col items-start mt-5">
               <span className="text-lg font-medium">Category</span>
               <Radio.Group
                 onChange={onChange}
@@ -121,14 +124,14 @@ function AllProductsDisplay() {
                 className="mt-3"
               >
                 <Space direction="vertical">
-                <Radio value={"null"}>All</Radio>
+                  <Radio value={"null"}>All</Radio>
                   <Radio value={"63eb12ac1781cbec3191c381"}>Men</Radio>
                   <Radio value={"63eb12cf1781cbec3191c383"}>Women</Radio>
                   <Radio value={"63eb133d1781cbec3191c385"}>Children</Radio>
                 </Space>
               </Radio.Group>
             </div>
-            <div className="mt-5 flex flex-col items-start">
+            <div className="flex flex-col items-start mt-5">
               <span className="text-lg font-medium">
                 Price<span className="text-sm"> ( in 00)</span>
               </span>
@@ -140,7 +143,7 @@ function AllProductsDisplay() {
                 defaultValue={[0, 10000]}
               />
             </div>
-            <div className="mt-5 flex flex-col items-start">
+            <div className="flex flex-col items-start mt-5">
               <span className="text-lg font-medium">
                 Discount<span className="text-sm"> ( in %)</span>
               </span>
@@ -152,17 +155,20 @@ function AllProductsDisplay() {
                 defaultValue={[0, 100]}
               />
             </div>
-            <div className="w-full flex items-center justify-center mt-3">
-              <button onClick={handleFilter} className="bg-primary p-2 px-4 rounded-xl text-light transition-colors duration-300 hover:bg-secondary hover:text-dark">
-
-                <i className="fa-solid fa-filter mr-2"></i>
-                Filter</button>
+            <div className="flex items-center justify-center w-full mt-3">
+              <button
+                onClick={handleFilter}
+                className="p-2 px-4 transition-colors duration-300 bg-primary rounded-xl text-light hover:bg-secondary hover:text-dark"
+              >
+                <i className="mr-2 fa-solid fa-filter"></i>
+                Filter
+              </button>
             </div>
           </div>
         </div>
         <div className="grid h-[85vh] w-full gap-10 overflow-auto p-14">
           <Row gutter={[24, 50]}>
-            {productArray?.map((item: IProduct, index: number) => {
+            {productDetails?.map((item: IProduct, index: number) => {
               return (
                 <Col span={8} key={index}>
                   {loader ? (
@@ -180,11 +186,13 @@ function AllProductsDisplay() {
                   ) : (
                     <Card
                       _id={item._id}
-                      photo={item.photo}
                       name={item.name}
+                      photo={item.photo}
                       intro={item.intro}
                       discount={item.discount}
                       price={item.price}
+                      averageRating={item.averageRating}
+                      totalRating={item.totalRating}
                     />
                   )}
                 </Col>

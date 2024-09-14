@@ -10,7 +10,7 @@ function Layout({
   hideFooter,
   ...props
 }: React.ComponentPropsWithRef<"div"> & { hideFooter?: boolean }) {
-  const [showCart, setShowCart] = useState<any>(false);
+  const [showCart, setShowCart] = useState<boolean>(false);
   return (
     <div className="overflow-hidden">
       <div className={clsx("Layout", className)} {...props}>
@@ -21,7 +21,7 @@ function Layout({
           <CardList setShowCart={setShowCart} showCart={showCart} />
           {children}
         </main>
-        { !hideFooter &&  <Footer />}
+        {!hideFooter && <Footer />}
       </div>
     </div>
   );

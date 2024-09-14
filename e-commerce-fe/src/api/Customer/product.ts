@@ -16,6 +16,10 @@ export const getProductByCategory = async (id: any) => {
   return await axios.get(ProductURL + `category/${id}`);
 };
 
+export const getSimilarProducts = async (id: any) => {
+  return await axios.get(ProductURL + `recommendations/${id}`);
+};
+
 export const getFilteredProduct = async (filter: any) => {
   return await axios.get(
     URL +
