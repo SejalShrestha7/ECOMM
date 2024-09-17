@@ -6,7 +6,7 @@ import { IOrder } from "../../../types";
 import { useNavigate } from "react-router-dom";
 function OrderDetails() {
   const [orderList, setOrderList] = useState<any>([]);
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   useEffect(() => {
     getOrders();
   }, []);
@@ -20,8 +20,7 @@ function OrderDetails() {
     }
   };
 
-  
-  const orderData =  orderList?.map((item: any) => {
+  const orderData = orderList?.map((item: any) => {
     return {
       id: item?._id,
       name: item?.user_id?.userName,
@@ -33,9 +32,9 @@ function OrderDetails() {
     };
   });
 
-  const handelAction = (id:string) => {
-      navigate(`/adminorder/${id}`)
-  }
+  const handelAction = (id: string) => {
+    navigate(`/adminorder/${id}`);
+  };
   const columns = [
     {
       title: "Order By",
@@ -49,16 +48,6 @@ function OrderDetails() {
       key: "email",
       render: (text: any) => <a>{text ? text : "-"}</a>,
       // align: 'center' as 'center',
-    },
-    {
-      title: "ReceiverName",
-      dataIndex: "receiver_name",
-      key: "receiver_name",
-    },
-    {
-      title: "ReceiverContact",
-      dataIndex: "receiver_contact",
-      key: "receiver_contact",
     },
 
     {
@@ -76,7 +65,10 @@ function OrderDetails() {
       key: "action",
       render: (_: any, record: any) => (
         <Space size={50}>
-          <i className="fa-solid fa-eye text-primary  cursor-pointer hover:text-secondary" onClick={() =>handelAction(record.id)}></i>
+          <i
+            className="fa-solid fa-eye text-primary  cursor-pointer hover:text-secondary"
+            onClick={() => handelAction(record.id)}
+          ></i>
         </Space>
       ),
     },

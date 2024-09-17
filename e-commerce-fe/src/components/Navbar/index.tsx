@@ -30,6 +30,9 @@ function Navbar({ setShowCart }: any) {
           userName: d.data.data.userName,
           phone: d.data.data.phone,
           email: d.data.data.email,
+          state: d.data.data.state || "",
+          district: d.data.data.district || "",
+          location: d.data.data.location || "",
         };
 
         dispatch(addUser(userDetails));

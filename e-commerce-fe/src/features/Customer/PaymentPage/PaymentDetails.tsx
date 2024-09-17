@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { FormEvent, useEffect, useRef, useState } from "react";
 import { paymentSchema } from "../../../validation/Customer";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -10,63 +10,113 @@ import KJTextarea from "../../../constants/KJTextArea";
 import { Col, Row, Radio, Button, Alert, notification } from "antd";
 import clsx from "clsx";
 import type { RadioChangeEvent } from "antd";
-import { useNavigate,useSearchParams } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../../Redux/store";
-import { getUser } from "../../../Redux/userSlice";
-
+import { addUser, getUser } from "../../../Redux/userSlice";
 
 import { EsewaPayment, sendOrder } from "../../../api/Customer/order";
+import { getAllCartItem } from "../../../api/Customer/cart";
+import { updateUser } from "../../../api/Customer/user";
 type ContactUsFormData = z.infer<typeof paymentSchema>;
 
 function PaymentDetails() {
   const [isSelected, setIsSelected] = useState(false);
+  const [editShippingDetails, setEditShippingDetails] = useState(false);
+  const dispatch = useDispatch();
+  const [cartItems, setCartItems] = useState<any>([]);
+  const stateRef = useRef<HTMLInputElement>(null);
+  const districtRef = useRef<HTMLInputElement>(null);
+  const locationaRef = useRef<HTMLInputElement>(null);
   const [value, setValue] = useState(0);
   const navigate = useNavigate();
-  const cart = useSelector((state: RootState) => state.cartReducer.items);
   const user = useSelector(getUser);
   const { id } = user;
-  const {
-    register,
-    reset,
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<ContactUsFormData>({
-    resolver: zodResolver(paymentSchema),
-    mode: "onBlur", // "onChange"
-  });
+
+  const getCartItems = async () => {
+    if (user.id) {
+      const res = await getAllCartItem(user.id);
+      const productDetails = res.data.data.products;
+      const formattedProductDetails: any[] = [];
+      if (
+        res.data.data?.products !== null &&
+        res.data.data?.products !== undefined
+      ) {
+        productDetails.map((product: any) => {
+          formattedProductDetails.push({
+            id: product.product_Id._id,
+            name: product.product_Id.name,
+            photo: product.product_Id.photo,
+            price: product.product_Id.price,
+            quantity: product.quantity,
+            size: product.size,
+            color: product.color,
+          });
+        });
+
+        setCartItems(formattedProductDetails);
+      }
+    }
+  };
+
+  useEffect(() => {
+    getCartItems();
+  }, [[]]);
+
   const onChange = (e: RadioChangeEvent) => {
     setValue(e.target.value);
     setIsSelected(true);
   };
 
+  const placeOrder = async (
+    transaction_id: string,
+    payment_method: string,
+    status: string
+  ) => {
+    if (user.id) {
+      const res = await sendOrder({
+        transaction_id: transaction_id,
+        user_id: user.id,
+        status: status,
+        payment_method: payment_method,
+      });
+      if (res.status == 200) {
+        localStorage.removeItem("cart");
+        notification.success({ message: "Order Send Sucessfully" });
+        window.location.href = "/";
+      } else {
+        notification.error({ message: "Something went wrong. Try again" });
+      }
+    }
+  };
+
   const [searchParams] = useSearchParams();
   const successPayment = searchParams.get("data");
 
-  if (successPayment) {
-    try {
-      const decodedString = atob(successPayment);
-      const responseData = JSON.parse(decodedString);
-      if (responseData.status === "COMPLETE") {
-        notification.success({ message: "Order has been placed." });
+  useEffect(() => {
+    if (successPayment) {
+      try {
+        const decodedString = atob(successPayment);
+        const responseData = JSON.parse(decodedString);
+        if (responseData.status === "COMPLETE") {
+          placeOrder(responseData.transaction_uuid, "E-sewa", "Paid");
+          notification.success({ message: "Order has been placed." });
+        }
+      } catch (error) {
+        console.log(error);
       }
-    } catch (error) {
-      console.log(error);
     }
-  }
+  }, [user]);
 
   const onSubmit = async (data: ContactUsFormData) => {
+    const productArray = cartItems.map((item: any) => {
+      return {
+        ...item,
+        product_id: item.id,
+      };
+    });
 
-  const  productArray =  cart.map((item) =>{
-    return{
-      ...item,
-      product_id:item.id,
-    }
-  })
-
-  console.log(productArray)
-
+    console.log(productArray);
 
     const orderData = {
       user_id: id,
@@ -77,148 +127,157 @@ function PaymentDetails() {
         monument: data.monument,
       },
       products: productArray,
-      status:"pending",
-      paymentMethod: data.paymentMethod == "1" ? "cash on delivery" :"digital wallet"
+      status: "pending",
+      paymentMethod:
+        data.paymentMethod == "1" ? "cash on delivery" : "digital wallet",
     };
-      const res = await sendOrder(orderData);
-      if(res.status == 200){
-          localStorage.removeItem("cart")
-          notification.success({message:"Order Send Sucessfully"})
-          window.location.href = "/";
-
-      }else{
-        notification.error({message:"Something went wrong. Try again"})
-      }
-
+    const res = await sendOrder(orderData);
+    if (res.status == 200) {
+      localStorage.removeItem("cart");
+      notification.success({ message: "Order Send Sucessfully" });
+      window.location.href = "/";
+    } else {
+      notification.error({ message: "Something went wrong. Try again" });
+    }
   };
   const handelCancle = () => {
     notification.warning({ message: "Order was canceled." });
     navigate("/");
   };
   const handleEsewa = async () => {
-    const response = await EsewaPayment(cart);
-    if(response.status === 200){
-      window.location.href = response?.data.data
+    const response = await EsewaPayment(cartItems);
+    if (response.status === 200) {
+      window.location.href = response?.data.data;
+    }
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    const userDetails = {
+      user_id: user.id,
+      firstname: user.firstName,
+      lastname: user.lastName,
+      username: user.userName,
+      phone: user.phone,
+      email: user.email,
+      state: stateRef.current?.value,
+      district: districtRef.current?.value,
+      location: locationaRef.current?.value,
+    };
+    const res = await updateUser(userDetails);
+
+    const updatedUserDetails = {
+      id: res.data.data._id,
+      firstName: res.data.data.firstName,
+      lastName: res.data.data.lastName,
+      userName: res.data.data.userName,
+      phone: res.data.data.phone,
+      email: res.data.data.email,
+      state: res.data.data.state || "",
+      district: res.data.data.district || "",
+      location: res.data.data.location || "",
+    };
+
+    dispatch(addUser(updatedUserDetails));
+    console.log(res.data.data);
+    if (res.status === 200) {
+      setEditShippingDetails(false);
     }
   };
   return (
-    <div className="w-1/2 pr-14">
-      <h1 className="my-2 text-xl font-medium">Your Order</h1>
-      <form className="mt-4" onSubmit={handleSubmit(onSubmit)}>
-        <Row gutter={12}>
-          <Col span={12}>
-            <KJInput
-              name="name"
-              control={control}
-              label="Reciver Name"
-              parentClass=""
-              register={register}
-              labelClass="block text-gray-700 text-sm font-medium mb-2"
-              error={errors}
-              placeholder="Product Name"
-              inputClass="shadow appearance-none border rounded border-[#bababa] w-full py-4 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            />
-          </Col>
-          <Col span={12}>
-            <KJInput
-              name="phone"
-              control={control}
-              label="Reciver Number"
-              parentClass=""
-              register={register}
-              labelClass="block text-gray-700 text-sm font-medium mb-2"
-              error={errors}
-              placeholder="Reciver Number"
-              required
-              inputClass="shadow appearance-none border rounded border-[#bababa] w-full py-4 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            />
-          </Col>
-        </Row>
-        <Row gutter={12}>
-          <Col span={24}>
-            <KJInput
-              name="location"
-              control={control}
-              label="Location"
-              parentClass=""
-              register={register}
-              labelClass="block text-gray-700 text-sm font-medium mb-2"
-              error={errors}
-              placeholder="Location"
-              required
-              inputClass="shadow appearance-none border rounded border-[#bababa] w-full py-4 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            />
-          </Col>
-        </Row>
-        <Row>
-          <Col span={24}>
-            <KJTextarea
-              name="monument"
-              control={control}
-              register={register}
-              label="Monument Near You"
-              parentClass=""
-              labelClass="block text-gray-700 text-sm font-medium mb-2"
-              error={errors}
-              required
-              placeholder="Monument Near You"
-              inputClass="shadow appearance-none border rounded border-[#bababa] w-full py-4 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            />
-          </Col>
-        </Row>
-        <Row gutter={12}>
-          <Col span={24}>
-            <Radio.Group
-              className="flex flex-col gap-5"
-              value={value}
-              {...register("paymentMethod")}
-              onChange={(e) => onChange(e)}
-            >
-              <Radio
-                value={1}
-                className={clsx(
-                  `py-3 px-5 ${
-                    isSelected ? "bg-[#ebe9f0] " : "bg-[#f8f7fa] "
-                  }   w-full rounded`
-                )}
-              >
-                Cash on Delivery
-              </Radio>
-              <Radio
-                value={2}
-                disabled={true}
-                className="py-3 px-5 bg-[#f8f7fa] w-full rounded"
-              >
-                <div>Pay via Digital Wallet (coming soon...)</div>
-              </Radio>
-            </Radio.Group>
-            <ErrorMessage
-              errors={errors}
-              name={"paymentMethod"}
-              render={({ message }) => (
-                <Alert
-                  message={message}
-                  type="error"
-                  className="mt-2 text-center"
-                />
-              )}
-            />
-          </Col>
-        </Row>
+    <>
+      <div className="min-h-full min-w-[50%] flex flex-col justify-center items-center ">
+        <div className="bg-grey rounded-xl w-1/2 my-2 h-[90%] flex flex-col justify-around  ">
+          {!editShippingDetails && (
+            <>
+              <h1 className="font-bold text-3xl p-2 px-4  text-center">
+                Delivery Information
+              </h1>
+              <div className="px-7">
+                <h1 className="text-xl font-semibold px-4  p-2 underline">
+                  Contact Information
+                </h1>
+                <h1 className="text-lg  px-4 p-1 ">
+                  Name : {`${user.firstName}  ${user.lastName}  `}
+                </h1>
+                <h1 className="text-lg  px-4 p-1 ">Contact : {user.phone}</h1>
+                <h1 className="text-lg  px-4 p-1 ">Email : {user.email}</h1>
+              </div>
 
-        <div className="flex mt-10 gap-10 items-center justify-center">
-          <Button type="primary" htmlType="submit" size="large">
-            Order Now
-          </Button>
-          <Button size="large" onClick={handelCancle}>
-            Cancel
-          </Button>
-          <Button size="large" onClick={handleEsewa}>
-            Pay with E-Sewa
-          </Button>
+              <div className="px-7">
+                <h1 className="font-semibold text-xl p-2 px-4 underline">
+                  Shipping Address
+                </h1>
+                <h1 className="text-lg  px-4 p-1 ">State : {user.state}</h1>
+                <h1 className="text-lg  px-4 p-1 ">
+                  District : {user.district}
+                </h1>
+                <h1 className="text-lg  px-4 p-1 ">
+                  Location : {user.location}
+                </h1>
+              </div>
+
+              <div className="px-7 flex justify-center items-center flex-col">
+                <button
+                  onClick={() => setEditShippingDetails(true)}
+                  className="bg-primary p-2 font-semibold text-light px-4 rounded-xl"
+                >
+                  Add Shipping Details
+                </button>
+                <p className="text-sm italic mt-4 text-darkGrey">
+                  *Enter your shipping details to order the items
+                </p>
+              </div>
+            </>
+          )}
+          {editShippingDetails && (
+            <form onSubmit={handleSubmit} className="flex-col flex px-4">
+              <label className="font-semibold px-2 my-2">State</label>
+              <input
+                ref={stateRef}
+                type="text"
+                placeholder="Enter your state"
+                className="h-11 px-4  placeholder:px-2 rounded-xl"
+              />
+              <label className="font-semibold px-2 my-2">District</label>
+              <input
+                ref={districtRef}
+                type="text"
+                placeholder="Enter your district"
+                className="h-11 px-4   placeholder:px-2 rounded-xl"
+              />
+              <label className="font-semibold px-2 my-2">Location</label>
+              <input
+                ref={locationaRef}
+                type="text"
+                placeholder="Enter your district"
+                className="h-11 px-4   placeholder:px-2 rounded-xl"
+              />
+              <button
+                onSubmit={handleSubmit}
+                className="bg-primary p-2 font-semibold mt-4 text-light px-4 rounded-xl"
+              >
+                Save Changes
+              </button>
+            </form>
+          )}
         </div>
-      </form>
-    </div>
+        <div className="w-full flex items-center justify-center *:mx-4">
+          <button
+            onClick={() => placeOrder("", "Cash On Delivery", "Pending")}
+            className="bg-primary p-2 font-semibold mt-4 text-light px-4 rounded-xl"
+          >
+            Cash on delivery
+          </button>
+          <button
+            onClick={handleEsewa}
+            className="bg-esewaGreen p-2 font-semibold mt-4 text-light px-4 rounded-xl"
+          >
+            Pay Wtih Esewa
+          </button>
+        </div>
+      </div>
+    </>
   );
 }
 

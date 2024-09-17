@@ -1,4 +1,4 @@
-import { Radio } from "antd";
+import { notification, Radio } from "antd";
 import React, { useState } from "react";
 import type { RadioChangeEvent } from "antd";
 import { ICart } from "../../../types";
@@ -7,7 +7,14 @@ import {
   changeQuantityItem,
   removeFromCart,
 } from "../../../Redux/cartSlice";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { getUser } from "../../../Redux/userSlice";
+import { deleteCartItem, insertNewCartItems } from "../../../api/Customer/cart";
+
+interface cartTypes extends ICart {
+  color: string;
+  setShowCart: any;
+}
 
 export const CartItem = ({
   id,
@@ -17,8 +24,11 @@ export const CartItem = ({
   quantity,
   discount,
   size,
-}: ICart) => {
+  color,
+  setShowCart,
+}: cartTypes) => {
   const dispatch = useDispatch();
+  const user = useSelector(getUser);
   const newCartElement = {
     id: id,
     name: name,
@@ -26,21 +36,41 @@ export const CartItem = ({
     price: price,
     quantity: quantity,
     size: size,
+    color: color,
   };
   const onChange = (e: RadioChangeEvent) => {
     dispatch(changeSizeItem({ ...newCartElement, size: e.target.value }));
   };
 
-  const onQuantatyChange = (key: string) => {
+  const onQuantatyChange = async (key: string) => {
     if (key == "add") {
-      quantity = quantity + 1;
+      await insertNewCartItems({
+        user_id: user.id,
+        product_id: id,
+        quantity: 1,
+      });
     } else {
-      quantity = quantity - 1;
+      await insertNewCartItems({
+        user_id: user.id,
+        product_id: id,
+        quantity: -1,
+      });
     }
     dispatch(changeQuantityItem({ ...newCartElement, quantity: quantity }));
   };
-  const removeCart = () => {
-    dispatch(removeFromCart(id));
+  const removeCart = async () => {
+    if (user.id) {
+      const cartData = {
+        user_id: user.id,
+        product_id: id,
+        color: color,
+        size: size,
+      };
+      await deleteCartItem(cartData);
+
+      notification.success({ message: `${name} removed from the cart` });
+      setShowCart(false);
+    }
   };
   return (
     <div className="relative cart-data-container">
@@ -55,12 +85,8 @@ export const CartItem = ({
         <div>
           <h1 className="text-lg">{name}</h1>
           <h1 className="mt-2 text-base">Rs.{price}</h1>
-          <Radio.Group onChange={onChange} value={size} className="mt-2">
-            <Radio value={"2xl"}>2Xl</Radio>
-            <Radio value={"xl"}>Xl</Radio>
-            <Radio value={"l"}>L</Radio>
-            <Radio value={"m"}>M</Radio>
-          </Radio.Group>
+          <h1>Size: {size}</h1>
+          <h1>Color: {color}</h1>
           <div className="flex items-center w-full gap-5 mt-2">
             <span>Quantity</span>
             <div className="flex items-center gap-2">

@@ -1,5 +1,6 @@
 import User from "../model/user.js";
 import bcrypt from "bcryptjs";
+import { response } from "express";
 import jwt from "jsonwebtoken";
 
 export const addUser = async (request, response) => {
@@ -15,6 +16,52 @@ export const addUser = async (request, response) => {
       data: newUser,
     });
   } catch (error) {
+    response.json({ status: 500, message: "Internal Server error" });
+  }
+};
+
+export const updateUserDetails = async (request, response) => {
+  try {
+    const {
+      user_id,
+      firstname,
+      lastname,
+      username,
+      phone,
+      district,
+      state,
+      location,
+    } = request.body;
+
+    const user = await User.findOne({ _id: user_id });
+    console.log(request.body);
+    if (!user) {
+      response.json({ status: 401, message: "User cannot be found" });
+    }
+
+    const userDetails = {
+      firstName: firstname || user.firstName,
+      lastName: lastname || user.lastName,
+      userName: username || user.userName,
+      phone: phone || user.phone,
+      district: district || user.district,
+      state: state || user.state,
+      location: location || user.location,
+    };
+    const updatedUser = await User.findByIdAndUpdate(
+      { _id: user_id },
+      userDetails,
+      {
+        new: true,
+      }
+    );
+    response.json({
+      status: 200,
+      message: "User Created Sucessfully",
+      data: updatedUser,
+    });
+  } catch (error) {
+    console.log(error);
     response.json({ status: 500, message: "Internal Server error" });
   }
 };

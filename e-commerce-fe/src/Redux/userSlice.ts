@@ -8,12 +8,15 @@ export interface UInterface {
 
 const initialState: UInterface = {
   user: {
-    id:"",
+    id: "",
     firstName: "",
     lastName: "",
     userName: "",
     phone: "",
     email: "",
+    state: "",
+    district: "",
+    location: "",
   },
 };
 
@@ -28,6 +31,9 @@ export const userSlice = createSlice({
   },
 });
 
-export const getUser = (state: RootState) => ({...state.userReducer.user,  isAuthenticated: !!state.userReducer.user.email}); 
+export const getUser = (state: RootState) => ({
+  ...state.userReducer.user,
+  isAuthenticated: !!state.userReducer.user.email,
+});
 
 export const { addUser } = userSlice.actions;

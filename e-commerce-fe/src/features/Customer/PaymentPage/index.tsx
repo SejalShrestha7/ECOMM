@@ -5,15 +5,12 @@ import ProductList from "./ProductList";
 import { Alert, Space, Spin } from "antd";
 import axios from "axios";
 
-
-
 function PaymentPage() {
-
   return (
     <Layout>
       <div className="flex p-14 relative">
         <ProductList />
-        <PaymentDetails  />
+        <PaymentDetails />
       </div>
     </Layout>
   );
