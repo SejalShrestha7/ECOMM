@@ -1,4 +1,4 @@
-import { Button, Rate } from "antd";
+import { Button, notification, Rate } from "antd";
 import React, { useEffect, useState } from "react";
 import Hoodie from "../../assets/Clothes/kindpng_623334.png";
 import "./style.css";
@@ -7,6 +7,8 @@ import { ICard, ICart } from "../../types";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart, CartState, removeFromCart } from "../../Redux/cartSlice";
 import { RootState } from "../../Redux/store";
+import { insertNewCartItems } from "../../api/Customer/cart";
+import { getUser } from "../../Redux/userSlice";
 function Card({
   _id,
   name,
@@ -18,22 +20,23 @@ function Card({
   totalRating,
 }: ICard) {
   const cart = useSelector((state: RootState) => state.cartReducer.items);
+  const user = useSelector(getUser);
 
   const isAddedToCart = cart.some((el) => el.id === _id);
 
   const dispatch = useDispatch();
 
-  const addCart = () => {
-    const cartDetails: ICart = {
-      id: _id,
-      name: name,
-      price: price,
-      photo: photo,
-      discount: discount || null,
+  const addCart = async () => {
+    const cartDetails = {
+      user_id: user.id,
+      product_id: _id,
       quantity: 1,
-      size: "xl",
     };
-    dispatch(addToCart(cartDetails));
+
+    if (cartDetails.product_id !== undefined) {
+      await insertNewCartItems(cartDetails);
+      notification.success({ message: "Added Item to the cart successfully" });
+    }
   };
 
   const removeCart = () => {

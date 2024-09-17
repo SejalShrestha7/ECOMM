@@ -9,27 +9,9 @@ const orderSchema = new mongoose.Schema(
       ref: user,
       require: true,
     },
-    receiver: {
-      receiver_name: {
-        type: String,
-        require: true,
-      },
-      receiver_contact: {
-        type: String,
-        require: true,
-      },
-      location: {
-        type: String,
-        require: true,
-      },
-      monument: {
-        type: String,
-        require: true,
-      },
-    },
     products: [
       {
-        product_id: {
+        product_Id: {
           type: mongoose.Schema.Types.ObjectId,
           ref: product,
           require: true,
@@ -38,18 +20,26 @@ const orderSchema = new mongoose.Schema(
           type: String,
           require: true,
         },
+        color: {
+          type: String,
+          require: true,
+        },
         quantity: {
           type: Number,
           require: true,
+          default: 1,
         },
       },
     ],
-    status:{
+    status: {
       type: String,
     },
-    paymentMethod:{
+    paymentMethod: {
       type: String,
-    }
+    },
+    transaction_id: {
+      type: String,
+    },
   },
   { timestamps: true }
 );

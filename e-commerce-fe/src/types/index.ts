@@ -43,6 +43,9 @@ export type IUser = {
   userName: String;
   phone: String;
   email: String;
+  state: string;
+  district: string;
+  location: string;
 };
 
 export type IOrder = {

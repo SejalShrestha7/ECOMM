@@ -1,25 +1,23 @@
 import "./style.css";
-import landingImage from "../../../assets/Clothes/kindpng_623334.png";
-import { Button, notification, Rate, Skeleton } from "antd";
-import ClothesSlider from "../ClothesSlider";
+import { Button, notification, Rate, Select } from "antd";
 import { useParams } from "react-router-dom";
 import {
   getProductById,
-  getProductByCategory,
   getSimilarProducts,
 } from "../../../api/Customer/product";
 import { useEffect, useState } from "react";
-import { ICart, IProduct } from "../../../types";
+import { IProduct } from "../../../types";
 import {
   SliderLoading,
   ParagraphWithImageLoading,
 } from "../../../constants/SkeletonLoader";
 import { useDispatch, useSelector } from "react-redux";
-import { addToCart, CartState, removeFromCart } from "../../../Redux/cartSlice";
+import { addToCart, removeFromCart } from "../../../Redux/cartSlice";
 import { RootState } from "../../../Redux/store";
 import { getUser } from "../../../Redux/userSlice";
 import { hasRatedTheProduct, rateProduct } from "../../../api/Customer/rating";
 import RecommendationSlider from "../recommendation";
+import { insertNewCartItems } from "../../../api/Customer/cart";
 
 function ProductPage() {
   const { id } = useParams();
@@ -27,6 +25,8 @@ function ProductPage() {
   const [loader, setLoader] = useState<boolean>(true);
   const [productDetails, setProductDetails] = useState<IProduct>();
   const [simailarProducts, setSimilarProducts] = useState<any>();
+  const [productSize, setProductSize] = useState<string>("XL");
+  const [productColor, setProductColor] = useState<string>("Red");
   const [rating, setRating] = useState<number>(0);
   const dispatch = useDispatch();
 
@@ -47,7 +47,7 @@ function ProductPage() {
 
   useEffect(() => {
     getRatingData();
-  }, [user, productDetails, loader, []]);
+  }, [user, productDetails, []]);
 
   const getProduct = async () => {
     setLoader(true);
@@ -86,19 +86,22 @@ function ProductPage() {
     }
     return notification.error({ message: "Unable to rate the product" });
   };
+  const handleSizeChange = (value: string) => {
+    setProductSize(value);
+  };
 
-  const handelAdd = () => {
+  const handelAdd = async () => {
     const cartDetails = {
-      id: productDetails?._id,
-      name: productDetails?.name,
-      price: productDetails?.price,
-      photo: productDetails?.photo,
-      discount: productDetails?.discount || null,
+      user_id: user.id,
+      product_id: productDetails?._id,
       quantity: 1,
-      size: "xl",
+      size: productSize,
+      color: productColor,
     };
 
-    dispatch(addToCart(cartDetails));
+    if (cartDetails.product_id !== undefined) {
+      await insertNewCartItems(cartDetails);
+    }
   };
 
   const handelRemove = () => {
@@ -159,10 +162,33 @@ function ProductPage() {
                 </h1>
                 <div>
                   <h1 className="mt-10 text-2xl">Available Colors </h1>
-                  <div className="flex items-center justify-start gap-2 mt-5">
-                    <div className="rounded-full cursor-pointer w-7 h-7 bg-primary"></div>
-                    <div className="rounded-full cursor-pointer w-7 h-7 bg-dark"></div>
-                    <div className="rounded-full cursor-pointer w-7 h-7 bg-secondary"></div>
+                  <Select
+                    className="my-2"
+                    defaultValue={productColor}
+                    onChange={(value: string) => setProductColor(value)}
+                    style={{ width: 120 }}
+                    options={[
+                      { value: "Red", label: "Red" },
+                      { value: "Blue", label: "Blue" },
+                      { value: "Green", label: "Green" },
+                      { value: "White", label: "White" },
+                      { value: "Black", label: "Black" },
+                    ]}
+                  />
+                  <div>
+                    <h1 className="mt-5 text-2xl">Select Size </h1>
+                    <Select
+                      defaultValue={productSize}
+                      onChange={handleSizeChange}
+                      style={{ width: 120 }}
+                      options={[
+                        { value: "S", label: "S" },
+                        { value: "M", label: "M" },
+                        { value: "LG", label: "LG" },
+                        { value: "XL", label: "XL" },
+                        { value: "XXL", label: "XXL" },
+                      ]}
+                    />
                   </div>
                 </div>
                 <h1 className="mt-5 mb-3 text-2xl">Description </h1>

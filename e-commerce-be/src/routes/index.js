@@ -5,6 +5,7 @@ import uploadRouter from "./fileUpload.router.js";
 import userRouter from "./user.route.js";
 import orderRouter from "./order.route.js";
 import ratingRouter from "./rating.route.js";
+import cartRouter from "./cart.route.js";
 const router = express.Router();
 
 const defaultRoutes = [
@@ -32,6 +33,10 @@ const defaultRoutes = [
   {
     path: "/rating",
     route: ratingRouter,
+  },
+  {
+    path: "/cart",
+    route: cartRouter,
   },
 ];
 
